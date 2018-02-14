@@ -1,23 +1,54 @@
 ﻿public class Employee
 {
-    public string Name { get; set; }
-    public int Age { get; set; }
-    public string Email { get; set; }
-    public string Department { get; set; }
-    public string Position { get; set; }
-    public double Salary { get; set; }
+    private string name;
+
+    public string Name
+    {
+	get { return name; }
+	set { name = value; }
+    }
+
+    private int age;
+
+    public int Age
+    {
+	get { return age; }
+	set { age = value; }
+    }
+
+    private string position;
+
+    public string Position
+    {
+	get { return position; }
+	set { position = value; }
+    }
+
+    private decimal salary;
+
+    public decimal Salary
+    {
+	get { return salary; }
+	set { salary = value; }
+    }
+
+    private string email;
+
+    public string Email
+    {
+	get { return email; }
+	set { email = value; }
+    }
 
     public Employee()
     {
 	Age = -1;
 	Email = "n/a";
     }
-
-    public Employee(string name, double salary, string position, string department) : this()
+    public Employee(string name, string position, decimal salary) : this()
     {
 	Name = name;
-	Department = department;
 	Position = position;
 	Salary = salary;
     }
- }
+}

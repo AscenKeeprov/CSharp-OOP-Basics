@@ -1,4 +1,7 @@
-﻿public class Person
+﻿using System;
+using System.Collections.Generic;
+
+public class Person
 {
     private string name;
 
@@ -16,25 +19,35 @@
 	set { age = value; }
     }
 
+    private string birthday;
+
+    public string Birthday
+    {
+	get { return birthday; }
+	set { birthday = value; }
+    }
+
+    private List<Person> parents;
+
+    public List<Person> Parents
+    {
+	get { return parents; }
+	set { parents = value; }
+    }
+
+    private List<Person> children;
+
+    public List<Person> Children
+    {
+	get { return children; }
+	set { children = value; }
+    }
+
     public Person()
     {
-	Name = "No name";
-	Age = -1;
-    }
-
-    public Person(string name) : this()
-    {
-	Name = name;
-    }
-
-    public Person(int age) : this()
-    {
-	Age = age;
-    }
-
-    public Person(string name, int age)
-    {
-	Age = age;
-	Name = name;
+	Name = String.Empty;
+	Birthday = String.Empty;
+	Children = new List<Person>();
+	Parents = new List<Person>();
     }
 }
