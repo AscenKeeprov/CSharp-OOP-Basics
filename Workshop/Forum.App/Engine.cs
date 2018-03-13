@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using Forum.App.Controllers;
-using Forum.App.Controllers.Contracts;
-using Forum.App.UserInterface;
-
-namespace Forum.App
+﻿namespace Forum.App
 {
+    using System;
+    using System.Collections.Generic;
+    using Forum.App.Controllers;
+    using Forum.App.Controllers.Contracts;
+    using Forum.App.UserInterface;
+
     public class Engine
     {
 	private ForumViewEngine forumViewer;
@@ -14,9 +14,9 @@ namespace Forum.App
 
 	public Engine()
 	{
-	    this.forumViewer = new ForumViewEngine();
-	    this.controllers = InitializeControllers();
-	    this.menuController = new MenuController(this.controllers, forumViewer);
+	    forumViewer = new ForumViewEngine();
+	    controllers = InitializeControllers();
+	    menuController = new MenuController(controllers, forumViewer);
 	}
 
 	internal void Run()
@@ -24,17 +24,14 @@ namespace Forum.App
 	    while (true)
 	    {
 		forumViewer.Mark(menuController.CurrentLabel);
+
 		var keyInfo = Console.ReadKey(true);
 		var key = keyInfo.Key;
+
 		forumViewer.Mark(menuController.CurrentLabel, false);
+
 		switch (key)
 		{
-		    case ConsoleKey.Backspace:
-		    case ConsoleKey.Escape:
-			menuController.Back();
-			break;
-		    case ConsoleKey.Home:
-			break;
 		    case ConsoleKey.LeftArrow:
 		    case ConsoleKey.UpArrow:
 			menuController.PreviousOption();
@@ -45,7 +42,7 @@ namespace Forum.App
 			menuController.NextOption();
 			break;
 		    case ConsoleKey.Enter:
-			menuController.ExecuteCommand();
+			menuController.SelectOption();
 			break;
 		}
 	    }
@@ -54,16 +51,16 @@ namespace Forum.App
 	private IEnumerable<IController> InitializeControllers()
 	{
 	    var controllers = new List<IController>
-			{
+	    {
 				new MainController(),
+				new SignUpController(),
 				new LogInController(),
 				new CategoriesController(),
 				new CategoryController(),
-				new SignUpController(),
-				new PostDetailsController(),
 				new AddPostController(),
-				new AddReplyController(),
-			};
+				new PostDetailsController(),
+				new AddReplyController()
+	    };
 	    return controllers;
 	}
     }

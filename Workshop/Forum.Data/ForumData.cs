@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using Forum.Models;
-
-namespace Forum.Data
+﻿namespace Forum.Data
 {
+    using System.Collections.Generic;
+    using Forum.Models;
+
     public class ForumData
     {
 	public List<Category> Categories { get; set; }
@@ -12,18 +12,18 @@ namespace Forum.Data
 
 	public ForumData()
 	{
-	    Users = DataMapper.LoadUsers();
 	    Categories = DataMapper.LoadCategories();
+	    Users = DataMapper.LoadUsers();
 	    Posts = DataMapper.LoadPosts();
 	    Replies = DataMapper.LoadReplies();
 	}
 
 	public void SaveChanges()
 	{
+	    DataMapper.SaveCategories(Categories);
 	    DataMapper.SaveUsers(Users);
 	    DataMapper.SavePosts(Posts);
 	    DataMapper.SaveReplies(Replies);
-	    DataMapper.SaveCategories(Categories);
 	}
     }
 }

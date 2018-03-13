@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-
-namespace Forum.Models
+﻿namespace Forum.Models
 {
+    using System.Collections.Generic;
+
     public class User
     {
 	public int Id { get; set; }

@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Forum.App.Services;
-using Forum.Models;
-
-namespace Forum.App.UserInterface.ViewModels
+﻿namespace Forum.App.UserInterface.ViewModels
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Forum.App.Services;
+    using Forum.Models;
+
     public class PostViewModel
     {
 	private const int LINE_LENGTH = 37;

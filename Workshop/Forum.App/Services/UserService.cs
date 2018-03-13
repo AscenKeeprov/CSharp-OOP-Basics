@@ -1,11 +1,11 @@
-﻿using System;
-using System.Linq;
-using Forum.Data;
-using Forum.Models;
-using static Forum.App.Controllers.SignUpController;
-
-namespace Forum.App.Services
+﻿namespace Forum.App.Services
 {
+    using System;
+    using System.Linq;
+    using Forum.Data;
+    using Forum.Models;
+    using static Forum.App.Controllers.SignUpController;
+
     public static class UserService
     {
 	public static bool TryLogInUser(string username, string password)
@@ -13,7 +13,8 @@ namespace Forum.App.Services
 	    if (String.IsNullOrWhiteSpace(username)
 		|| String.IsNullOrWhiteSpace(password)) return false;
 	    ForumData forumData = new ForumData();
-	    bool userExists = forumData.Users.Any(u => u.Username == username);
+	    bool userExists = forumData.Users
+		.Any(u => u.Username == username && u.Password == password);
 	    return userExists;
 	}
 
@@ -39,13 +40,6 @@ namespace Forum.App.Services
 	{
 	    ForumData forumData = new ForumData();
 	    User user = forumData.Users.Find(u => u.Id == userId);
-	    return user;
-	}
-
-	public static User GetUser(string username)
-	{
-	    ForumData forumData = new ForumData();
-	    User user = forumData.Users.Find(u => u.Username == username);
 	    return user;
 	}
     }

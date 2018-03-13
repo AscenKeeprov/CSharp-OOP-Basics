@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Forum.Models;
-
-namespace Forum.Data
+﻿namespace Forum.Data
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using Forum.Models;
+
     public class DataMapper
     {
 	private const string DATA_PATH = "../data/";

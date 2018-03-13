@@ -1,211 +1,210 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Forum.App.Controllers;
-using Forum.App.Controllers.Contracts;
-using Forum.App.Services;
-using Forum.App.UserInterface;
-using Forum.App.UserInterface.Contracts;
-
-namespace Forum.App
+﻿namespace Forum.App
 {
-    internal class MenuController
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Forum.App.Controllers;
+    using Forum.App.Controllers.Contracts;
+    using Forum.App.UserInterface;
+    using Forum.App.UserInterface.Contracts;
+    using Forum.App.UserInterface.Views;
+
+    internal class MenuController : IController
     {
 	private const int DEFAULT_INDEX = 0;
 	private IController[] controllers;
-	private Stack<int> controllerHistory;
+	private List<IController> controllerHistory;
 	private int currentOptionIndex;
 	private ForumViewEngine forumViewer;
-	private string Username { get; set; }
-	private IView CurrentView { get; set; }
-	private MenuState State => (MenuState)controllerHistory.Peek();
-	private int CurrentControllerIndex => this.controllerHistory.Peek();
-	private IController CurrentController => this.controllers[CurrentControllerIndex];
-	internal ILabel CurrentLabel => CurrentView.Buttons[currentOptionIndex];
+	public string Username { get; set; }
+	private IView currentView => GetView(Username);
+	private IController currentController => controllerHistory.Last();
+	internal ILabel CurrentLabel => currentView.Buttons[currentOptionIndex];
 
 	public MenuController(IEnumerable<IController> controllers, ForumViewEngine forumViewer)
 	{
 	    this.controllers = controllers.ToArray();
 	    this.forumViewer = forumViewer;
 	    InitializeControllerHistory();
-	    this.currentOptionIndex = DEFAULT_INDEX;
+	    currentOptionIndex = DEFAULT_INDEX;
+	    RenderCurrentView();
 	}
 
 	private void InitializeControllerHistory()
 	{
-	    if (controllerHistory != null)
-		throw new InvalidOperationException($"{nameof(controllerHistory)} already initialized!");
-	    int mainControllerIndex = 0;
-	    this.controllerHistory = new Stack<int>();
-	    this.controllerHistory.Push(mainControllerIndex);
-	    this.RenderCurrentView();
+	    controllerHistory = new List<IController>();
+	    controllerHistory.Add(controllers.Single(c => c is MainController));
+	}
+
+	private void RenderCurrentView()
+	{
+	    forumViewer.RenderView(currentView);
+	    currentOptionIndex = DEFAULT_INDEX;
+	}
+
+	public IView GetView(string username)
+	{
+	    return currentController.GetView(username);
 	}
 
 	internal void PreviousOption()
 	{
-	    this.currentOptionIndex--;
-	    if (this.currentOptionIndex < 0)
-		this.currentOptionIndex += CurrentView.Buttons.Length;
+	    currentOptionIndex--;
+	    int totalOptions = currentView.Buttons.Length;
+	    if (currentOptionIndex < 0)
+		currentOptionIndex += totalOptions;
 	    if (CurrentLabel.IsHidden) PreviousOption();
 	}
 
 	internal void NextOption()
 	{
-	    this.currentOptionIndex++;
-	    int totalOptions = this.CurrentView.Buttons.Length;
-	    if (this.currentOptionIndex >= totalOptions)
-		this.currentOptionIndex -= totalOptions;
+	    currentOptionIndex++;
+	    int totalOptions = currentView.Buttons.Length;
+	    if (currentOptionIndex >= totalOptions)
+		currentOptionIndex -= totalOptions;
 	    if (CurrentLabel.IsHidden) NextOption();
 	}
 
-	internal void Back()
+	internal void SelectOption()
 	{
-	    if (State == MenuState.Categories || State == MenuState.ViewCategory)
-	    {
-		IPaginationController currentController = (IPaginationController)CurrentController;
-		currentController.CurrentPage = 0;
-	    }
-	    if (controllerHistory.Count > 1)
-	    {
-		controllerHistory.Pop();
-		this.currentOptionIndex = DEFAULT_INDEX;
-	    }
-	    RenderCurrentView();
-	}
-
-	internal void ExecuteCommand()
-	{
-	    MenuState newState = CurrentController.ExecuteCommand(currentOptionIndex);
+	    MenuState newState = ExecuteCommand(currentOptionIndex);
+	    IController controller = null;
 	    switch (newState)
 	    {
-		case MenuState.PostAdded:
-		    AddPost();
+		case MenuState.Back:
+		    RedirectToMenu(MenuState.Back);
 		    break;
-		case MenuState.OpenCategory:
-		    OpenCategory();
+		case MenuState.Error:
+		    goto default;
+		case MenuState.Signup:
+		    controller = controllers.SingleOrDefault(c => c is SignUpController);
 		    break;
-		case MenuState.ViewPost:
-		    ViewPost();
+		case MenuState.SignedUp:
+		    goto case MenuState.LoggedIn;
+		case MenuState.Login:
+		    controller = controllers.SingleOrDefault(c => c is LogInController);
 		    break;
-		case MenuState.SuccessfulLogIn:
-		    SuccessfulLogin();
+		case MenuState.LoggedIn:
+		    LogIn();
 		    break;
 		case MenuState.LoggedOut:
 		    LogOut();
 		    break;
-		case MenuState.Back:
-		    this.Back();
+		case MenuState.Categories:
+		    controller = controllers.SingleOrDefault(c => c is CategoriesController);
 		    break;
-		case MenuState.ViewCategory:
-		case MenuState.Error:
-		    RenderCurrentView();
+		case MenuState.AddPost:
+		    controller = controllers.SingleOrDefault(c => c is AddPostController);
 		    break;
+		case MenuState.PostAdded:
+		    controller = controllers.SingleOrDefault(c => c is CategoryController);
+		    if (currentController is AddPostController addPostController)
+		    {
+			string categoryName = addPostController.Post.Category;
+			var categoryController = (CategoryController)controller;
+			categoryController.BrowseCategory(categoryName);
+			addPostController.ResetPost();
+		    }
+		    break;
+		case MenuState.OpenCategory:
+		    controller = controllers.SingleOrDefault(c => c is CategoryController);
+		    if (currentView is CategoriesView categoriesView)
+		    {
+			string categoryName = categoriesView.CategoryNames[currentOptionIndex - 1];
+			var categoryController = (CategoryController)controller;
+			categoryController.BrowseCategory(categoryName);
+		    }
+		    break;
+		case MenuState.ViewPost:
+		    controller = controllers.SingleOrDefault(c => c is PostDetailsController);
+		    if (currentView is CategoryView categoryView)
+		    {
+			string postTitle = categoryView.PostTitles[currentOptionIndex - 1];
+			var postInfoController = (PostDetailsController)controller;
+			postInfoController.ReadPost(postTitle);
+		    }
+		    break;
+		case MenuState.Rerender:
+		    goto default;
 		case MenuState.AddReplyToPost:
-		    RedirectToAddReply();
+		    controller = controllers.SingleOrDefault(c => c is AddReplyController);
+		    if (currentController is PostDetailsController postDetailsController)
+		    {
+			string postTitle = postDetailsController.PostTitle;
+			var replyController = (AddReplyController)controller;
+			replyController.ReplyToPost(postTitle);
+		    }
 		    break;
+
 		case MenuState.ReplyAdded:
-		    AddReply();
+		    controller = controllers.SingleOrDefault(c => c is PostDetailsController);
 		    break;
 		default:
-		    RedirectToMenu(newState);
+		    RenderCurrentView();
 		    break;
+	    }
+	    if (controller != null && controller.GetType().Name != currentController.GetType().Name)
+	    {
+		controllerHistory.Add(controller);
+		RenderCurrentView();
 	    }
 	}
 
-	private void LogOut()
+	public MenuState ExecuteCommand(int index)
 	{
-	    Username = String.Empty;
-	    LogOutUser();
+	    return currentController.ExecuteCommand(index);
+	}
+
+	private void RedirectToMenu(MenuState newState)
+	{
+	    IController controller = null;
+	    switch (newState)
+	    {
+		case MenuState.Back:
+		    if (currentController is SignUpController ||
+			currentController is LogInController ||
+			currentController is CategoriesController)
+			controller = controllerHistory.LastOrDefault(c => c is MainController);
+		    else if (currentController is CategoryController)
+		    {
+			controller = controllerHistory.LastOrDefault(c => c is CategoriesController);
+			if (controller == null)
+			    controller = controllers.SingleOrDefault(c => c is CategoriesController);
+		    }
+		    else if (currentController is PostDetailsController)
+			controller = controllerHistory.LastOrDefault(c => c is CategoryController);
+		    else if (currentController is AddReplyController)
+			controller = controllerHistory.LastOrDefault(c => c is PostDetailsController);
+		    break;
+		case MenuState.Main:
+		    controller = controllerHistory.LastOrDefault(c => c is MainController);
+		    break;
+	    }
+	    controllerHistory.Add(controller);
 	    RenderCurrentView();
 	}
 
-	private void SuccessfulLogin()
+	private void LogIn()
 	{
-	    var loginController = (IReadUserInfoController)CurrentController;
+	    var loginController = (IReadUserInfoController)currentController;
 	    Username = loginController.Username;
-	    LogInUser();
-	    RedirectToMenu(MenuState.Main);
-	}
-
-	private void ViewPost()
-	{
-	    var categoryController = (CategoryController)CurrentController;
-	    int categoryId = categoryController.CategoryId;
-	    var posts = PostService.GetPostsByCategory(categoryId).ToArray();
-	    int postIndex = categoryController.CurrentPage * CategoriesController.PAGE_OFFSET + currentOptionIndex;
-	    int postId = posts[postIndex - 1].Id;
-	    var postController = (PostDetailsController)controllers[(int)MenuState.ViewPost];
-	    postController.SetPostId(postId);
-	    RedirectToMenu(MenuState.ViewPost);
-	}
-
-	private void OpenCategory()
-	{
-	    var categoriesController = (CategoriesController)CurrentController;
-	    int categoryIndex = categoriesController.CurrentPage * CategoriesController.PAGE_OFFSET + currentOptionIndex;
-	    var categoryController = (CategoryController)controllers[(int)MenuState.OpenCategory];
-	    categoryController.SetCategory(categoryIndex);
-	    RedirectToMenu(MenuState.OpenCategory);
-	}
-
-	private void AddPost()
-	{
-	    var addPostController = (AddPostController)CurrentController;
-	    int postId = addPostController.Post.PostId;
-	    var postViewer = (PostDetailsController)controllers[(int)MenuState.ViewPost];
-	    postViewer.SetPostId(postId);
-	    addPostController.ResetPost();
-	    this.controllerHistory.Pop();
-	    RedirectToMenu(MenuState.ViewPost);
-	}
-
-	private void AddReply()
-	{
-	    Back();
-	}
-
-	private void RedirectToAddReply()
-	{
-	    var postDetailsController = (PostDetailsController)CurrentController;
-	    var addReplyController = (AddReplyController)controllers[(int)MenuState.AddReply];
-	    addReplyController.Reply.PostId = postDetailsController.PostId;
-	    RedirectToMenu(MenuState.AddReplyToPost);
-	}
-
-	private void RenderCurrentView()
-	{
-	    CurrentView = CurrentController.GetView(Username);
-	    this.currentOptionIndex = DEFAULT_INDEX;
-	    this.forumViewer.RenderView(CurrentView);
-	}
-
-	private bool RedirectToMenu(MenuState newState)
-	{
-	    if (State != newState)
-	    {
-		controllerHistory.Push((int)newState);
-		RenderCurrentView();
-		return true;
-	    }
-	    return false;
-	}
-
-	private void LogInUser()
-	{
 	    foreach (IController controller in controllers)
 	    {
 		if (controller is IUserRestrictedController userRestrictedController)
 		    userRestrictedController.UserLogIn();
 	    }
+	    RedirectToMenu(MenuState.Main);
 	}
 
-	private void LogOutUser()
+	private void LogOut()
 	{
+	    Username = String.Empty;
 	    foreach (IController controller in controllers)
 	    {
 		if (controller is IUserRestrictedController userRestrictedController)
 		    userRestrictedController.UserLogOut();
 	    }
+	    RedirectToMenu(MenuState.Main);
 	}
     }
 }

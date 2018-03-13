@@ -1,16 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Forum.App.Services;
-using Forum.Models;
-
-namespace Forum.App.UserInterface.ViewModels
+﻿namespace Forum.App.UserInterface.ViewModels
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using Forum.App.Services;
+    using Forum.Models;
+
     public class ReplyViewModel
     {
 	private const int LINE_LENGTH = 37;
 	public int ReplyId { get; set; }
 	public int PostId { get; set; }
+	public string PostTitle { get; set; }
 	public string Author { get; set; }
 	public IList<string> Content { get; set; }
 

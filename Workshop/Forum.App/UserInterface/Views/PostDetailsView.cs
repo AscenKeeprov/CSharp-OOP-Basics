@@ -1,6 +1,7 @@
 ﻿namespace Forum.App.UserInterface.Views
 {
     using System.Collections.Generic;
+
     using Forum.App.UserInterface;
     using Forum.App.UserInterface.Contracts;
     using Forum.App.UserInterface.ViewModels;

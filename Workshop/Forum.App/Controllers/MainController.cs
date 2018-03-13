@@ -1,28 +1,27 @@
-﻿using System;
-using Forum.App.Controllers.Contracts;
-using Forum.App.UserInterface.Contracts;
-using Forum.App.UserInterface.Views;
-
-namespace Forum.App.Controllers
+﻿namespace Forum.App.Controllers
 {
+    using Forum.App.Controllers.Contracts;
+    using Forum.App.UserInterface.Contracts;
+    using Forum.App.UserInterface.Views;
+
     public class MainController : IController, IUserRestrictedController
     {
 	private const int COMMAND_COUNT = 3;
 	public bool LoggedInUser { get; private set; }
-
-	private enum UserCommand
-	{
-	    Categories, AddPost, LogOut
-	}
 
 	private enum GuestCommand
 	{
 	    Categories, Login, SignUp
 	}
 
+	private enum UserCommand
+	{
+	    Categories, AddPost, LogOut
+	}
+
 	public MainController()
 	{
-	    LoggedInUser = false;
+	    this.LoggedInUser = false;
 	}
 
 	public IView GetView(string userName)
@@ -44,29 +43,26 @@ namespace Forum.App.Controllers
 			return MenuState.LoggedOut;
 		}
 	    }
-	    else
+	    switch ((GuestCommand)index)
 	    {
-		switch ((GuestCommand)index)
-		{
-		    case GuestCommand.Categories:
-			return MenuState.Categories;
-		    case GuestCommand.Login:
-			return MenuState.Login;
-		    case GuestCommand.SignUp:
-			return MenuState.Signup;
-		}
+		case GuestCommand.Categories:
+		    return MenuState.Categories;
+		case GuestCommand.Login:
+		    return MenuState.Login;
+		case GuestCommand.SignUp:
+		    return MenuState.Signup;
 	    }
-	    throw new InvalidOperationException();
+	    throw new InvalidCommandException();
 	}
 
 	public void UserLogIn()
 	{
-	    LoggedInUser = true;
+	    this.LoggedInUser = true;
 	}
 
 	public void UserLogOut()
 	{
-	    LoggedInUser = false;
+	    this.LoggedInUser = false;
 	}
     }
 }

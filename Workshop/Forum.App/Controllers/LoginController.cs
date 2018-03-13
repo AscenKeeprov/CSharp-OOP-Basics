@@ -1,12 +1,12 @@
-﻿using System;
-using Forum.App.Controllers.Contracts;
-using Forum.App.Services;
-using Forum.App.UserInterface;
-using Forum.App.UserInterface.Contracts;
-using Forum.App.UserInterface.Views;
-
-namespace Forum.App.Controllers
+﻿namespace Forum.App.Controllers
 {
+    using System;
+    using Forum.App.Controllers.Contracts;
+    using Forum.App.Services;
+    using Forum.App.UserInterface;
+    using Forum.App.UserInterface.Contracts;
+    using Forum.App.UserInterface.Views;
+
     public class LogInController : IController, IReadUserInfoController
     {
 	public string Username { get; private set; }
@@ -32,19 +32,13 @@ namespace Forum.App.Controllers
 
 	public IView GetView(string userName)
 	{
-	    return new LogInView(Error, Username, Password.Length);
-	}
-
-	public void ReadUsername()
-	{
-	    Username = ForumViewEngine.ReadRow();
-	    ForumViewEngine.HideCursor();
-	}
-
-	public void ReadPassword()
-	{
-	    Password = ForumViewEngine.ReadRow();
-	    ForumViewEngine.HideCursor();
+	    IView logInView = new LogInView(Error, Username, Password.Length);
+	    if (Error)
+	    {
+		ResetLogin();
+		Error = false;
+	    }
+	    return logInView;
 	}
 
 	public MenuState ExecuteCommand(int index)
@@ -59,14 +53,26 @@ namespace Forum.App.Controllers
 		    return MenuState.Login;
 		case Command.LogIn:
 		    bool loggedIn = UserService.TryLogInUser(Username, Password);
-		    if (loggedIn) return MenuState.SuccessfulLogIn;
+		    if (loggedIn) return MenuState.LoggedIn;
 		    Error = true;
 		    return MenuState.Error;
 		case Command.Back:
 		    ResetLogin();
 		    return MenuState.Back;
 	    }
-	    throw new InvalidOperationException();
+	    throw new InvalidCommandException();
+	}
+
+	public void ReadUsername()
+	{
+	    Username = ForumViewEngine.ReadRow();
+	    ForumViewEngine.HideCursor();
+	}
+
+	public void ReadPassword()
+	{
+	    Password = ForumViewEngine.ReadRow();
+	    ForumViewEngine.HideCursor();
 	}
     }
 }

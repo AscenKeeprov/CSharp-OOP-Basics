@@ -1,18 +1,16 @@
-﻿using System;
-using Forum.App.Controllers.Contracts;
-using Forum.App.Services;
-using Forum.App.UserInterface;
-using Forum.App.UserInterface.Contracts;
-using Forum.App.UserInterface.ViewModels;
-using Forum.App.UserInterface.Views;
-
-namespace Forum.App.Controllers
+﻿namespace Forum.App.Controllers
 {
+    using Forum.App.Controllers.Contracts;
+    using Forum.App.Services;
+    using Forum.App.UserInterface;
+    using Forum.App.UserInterface.Contracts;
+    using Forum.App.UserInterface.ViewModels;
+    using Forum.App.UserInterface.Views;
 
-    public class PostDetailsController : IController
+    public class PostDetailsController : IController, IUserRestrictedController
     {
 	public bool LoggedInUser { get; set; }
-	public int PostId { get; set; }
+	public string PostTitle { get; private set; }
 
 	public enum Command
 	{
@@ -21,7 +19,7 @@ namespace Forum.App.Controllers
 
 	public IView GetView(string userName)
 	{
-	    PostViewModel postViewModel = PostService.GetPostViewModel(PostId);
+	    PostViewModel postViewModel = PostService.GetPostViewModel(PostTitle);
 	    return new PostDetailsView(postViewModel, LoggedInUser);
 	}
 
@@ -35,9 +33,9 @@ namespace Forum.App.Controllers
 	    LoggedInUser = false;
 	}
 
-	public void SetPostId(int postId)
+	public void ReadPost(string postTitle)
 	{
-	    PostId = postId;
+	    PostTitle = postTitle;
 	}
 
 	public MenuState ExecuteCommand(int index)
@@ -50,7 +48,7 @@ namespace Forum.App.Controllers
 		case Command.AddReply:
 		    return MenuState.AddReplyToPost;
 	    }
-	    throw new InvalidOperationException();
+	    throw new InvalidCommandException();
 	}
     }
 }

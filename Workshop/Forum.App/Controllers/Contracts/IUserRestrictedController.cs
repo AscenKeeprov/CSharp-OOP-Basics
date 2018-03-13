@@ -3,7 +3,9 @@
     public interface IUserRestrictedController
     {
 	bool LoggedInUser { get; }
+
 	void UserLogIn();
+
 	void UserLogOut();
     }
 }

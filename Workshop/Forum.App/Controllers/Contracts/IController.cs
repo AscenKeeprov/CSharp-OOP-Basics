@@ -1,10 +1,11 @@
-﻿using Forum.App.UserInterface.Contracts;
-
-namespace Forum.App.Controllers.Contracts
+﻿namespace Forum.App.Controllers.Contracts
 {
+    using Forum.App.UserInterface.Contracts;
+
     public interface IController
     {
-	IView GetView(string userName);
 	MenuState ExecuteCommand(int index);
+
+	IView GetView(string userName);
     }
 }

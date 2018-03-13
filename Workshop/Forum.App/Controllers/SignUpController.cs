@@ -1,18 +1,20 @@
-﻿using System;
-using Forum.App.Controllers.Contracts;
-using Forum.App.Services;
-using Forum.App.UserInterface;
-using Forum.App.UserInterface.Contracts;
-using Forum.App.UserInterface.Views;
-
-namespace Forum.App.Controllers
+﻿namespace Forum.App.Controllers
 {
+    using System;
+    using Forum.App;
+    using Forum.App.Controllers.Contracts;
+    using Forum.App.Services;
+    using Forum.App.UserInterface;
+    using Forum.App.UserInterface.Contracts;
+    using Forum.App.UserInterface.Views;
+
     public class SignUpController : IController, IReadUserInfoController
     {
 	private const string DETAILS_ERROR = "Invalid Username or Password!";
 	private const string USERNAME_TAKEN_ERROR = "Username already in use!";
 	public string Username { get; private set; }
 	private string Password { get; set; }
+	private bool Error { get; set; }
 	private string ErrorMessage { get; set; }
 
 	private enum Command
@@ -25,11 +27,6 @@ namespace Forum.App.Controllers
 	    Success, DetailsError, UsernameTakenError
 	}
 
-	public SignUpController()
-	{
-	    ResetSignUp();
-	}
-
 	private void ResetSignUp()
 	{
 	    ErrorMessage = String.Empty;
@@ -39,19 +36,13 @@ namespace Forum.App.Controllers
 
 	public IView GetView(string userName)
 	{
-	    return new SignUpView(ErrorMessage);
-	}
-
-	public void ReadUsername()
-	{
-	    Username = ForumViewEngine.ReadRow();
-	    ForumViewEngine.HideCursor();
-	}
-
-	public void ReadPassword()
-	{
-	    Password = ForumViewEngine.ReadRow();
-	    ForumViewEngine.HideCursor();
+	    IView signUpView = new SignUpView(ErrorMessage);
+	    if (Error)
+	    {
+		ResetSignUp();
+		Error = false;
+	    }
+	    return signUpView;
 	}
 
 	public MenuState ExecuteCommand(int index)
@@ -65,16 +56,18 @@ namespace Forum.App.Controllers
 		    ReadPassword();
 		    return MenuState.Signup;
 		case Command.SignUp:
-		    SignUpStatus signUp = UserService.TrySignUpUser(Username, Password);
-		    switch (signUp)
+		    SignUpStatus signUpStatus = UserService.TrySignUpUser(Username, Password);
+		    switch (signUpStatus)
 		    {
 			case SignUpStatus.Success:
-			    return MenuState.SuccessfulLogIn;
+			    return MenuState.SignedUp;
 			case SignUpStatus.DetailsError:
 			    ErrorMessage = DETAILS_ERROR;
+			    Error = true;
 			    return MenuState.Error;
 			case SignUpStatus.UsernameTakenError:
 			    ErrorMessage = USERNAME_TAKEN_ERROR;
+			    Error = true;
 			    return MenuState.Error;
 		    }
 		    break;
@@ -82,7 +75,19 @@ namespace Forum.App.Controllers
 		    ResetSignUp();
 		    return MenuState.Back;
 	    }
-	    throw new InvalidOperationException();
+	    throw new InvalidCommandException();
+	}
+
+	public void ReadUsername()
+	{
+	    Username = ForumViewEngine.ReadRow();
+	    ForumViewEngine.HideCursor();
+	}
+
+	public void ReadPassword()
+	{
+	    Password = ForumViewEngine.ReadRow();
+	    ForumViewEngine.HideCursor();
 	}
     }
 }

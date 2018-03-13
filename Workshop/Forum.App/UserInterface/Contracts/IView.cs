@@ -3,6 +3,7 @@
     public interface IView
     {
 	ILabel[] Labels { get; }
+
 	ILabel[] Buttons { get; }
     }
 }

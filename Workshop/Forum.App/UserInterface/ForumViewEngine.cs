@@ -16,7 +16,7 @@
 	}
 
 	#region HardCoded Console
-	private ConsoleColor hardCodedBgColor = ConsoleColor.Blue;
+	private ConsoleColor hardCodedBgColor = ConsoleColor.DarkGreen;
 	private ConsoleColor hardCodedHlColor = ConsoleColor.DarkMagenta;
 	private ConsoleColor hardCodedFontColor = ConsoleColor.White;
 
@@ -66,12 +66,10 @@
 	internal void RenderView(IView view)
 	{
 	    Clear();
-
 	    foreach (var label in view.Labels.Where(l => !l.IsHidden))
 	    {
 		this.DisplayLabel(label);
 	    }
-
 	    foreach (var button in view.Buttons.Where(b => !b.IsHidden))
 	    {
 		this.DisplayLabel(button);
@@ -160,6 +158,7 @@
 	    int cursorLeft = Console.CursorLeft;
 	    int cursorTop = Console.CursorTop;
 	    ClearRow(cursorLeft, cursorTop);
+
 	    ShowCursor();
 	    string result = Console.ReadLine();
 	    HideCursor();
@@ -170,6 +169,7 @@
 	{
 	    Console.SetCursorPosition(left, top);
 	    Console.Write(new string(' ', 30));
+
 	    Console.SetCursorPosition(left, top);
 	}
 
@@ -183,6 +183,8 @@
 	    int left = textArea.Left;
 	    int top = textArea.Top;
 
+	    Console.SetCursorPosition(left, top);
+
 	    foreach (var item in textArea.Lines)
 	    {
 		Console.SetCursorPosition(left, top);
@@ -194,7 +196,6 @@
 		}
 		top++;
 	    }
-	    Console.SetCursorPosition(textArea.DisplayCursor.Left, textArea.DisplayCursor.Top);
 	}
     }
 }

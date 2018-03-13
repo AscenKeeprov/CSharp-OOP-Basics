@@ -2,7 +2,6 @@
 {
     using System.Collections.Generic;
     using System.Linq;
-    using Forum.App.UserInterface;
     using Forum.App.UserInterface.Contracts;
 
     class CategoriesView : IView
@@ -80,12 +79,12 @@
 
 	private void InitializeStaticLabels(Position consoleCenter)
 	{
-	    string[] labelContent = new string[] { "CATEGORIES", "Name", "Posts" };
+	    string[] labelContent = new string[] { "CATEGORIES", "Name", /*"Posts"*/ };
 	    Position[] labelPositions = new Position[]
 	    {
 		new Position(consoleCenter.Left - 18, consoleCenter.Top - 12), // CATEGORIES
                 new Position(consoleCenter.Left - 18, consoleCenter.Top - 10), // Name
-                new Position(consoleCenter.Left + 14, consoleCenter.Top - 10), // Posts
+                //new Position(consoleCenter.Left + 14, consoleCenter.Top - 10), // Posts
             };
 
 	    IList<ILabel> labels = new List<ILabel>();

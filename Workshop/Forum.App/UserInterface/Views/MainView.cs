@@ -59,6 +59,7 @@
 	    };
 	    Position[] labelPositions = new Position[]
 	    {
+                //new Position(consoleCenter.Left - 4, consoleCenter.Top - 11),
                 new Position(consoleCenter.Left - 4, consoleCenter.Top - 6),
 		new Position(consoleCenter.Left - 4, consoleCenter.Top - 7),
 	    };

@@ -14,14 +14,15 @@
 	private static int centerTop = Console.WindowHeight / 2;
 	private static int centerLeft = Console.WindowWidth / 2;
 	private string categoryName;
+	public int CurrentPage { get; private set; }
+	public int LastPage { get; private set; }
 
-	public CategoryView(string categoryName, string[] postNames, bool isFirstPage = false, bool isLastPage = false)
+	public CategoryView(string categoryName, string[] postTitles, int currentPage, int lastPage)
 	{
 	    this.categoryName = categoryName;
-	    this.PostTitles = postNames;
-
-	    this.IsFirstPage = isFirstPage;
-	    this.IsLastPage = isLastPage;
+	    PostTitles = postTitles;
+	    CurrentPage = currentPage;
+	    LastPage = lastPage;
 	    InitializeLabels();
 	}
 
@@ -30,10 +31,6 @@
 	public ILabel[] Buttons { get; private set; }
 
 	public string[] PostTitles { get; private set; }
-
-	public bool IsFirstPage { get; private set; }
-
-	public bool IsLastPage { get; private set; }
 
 	private void InitializeLabels()
 	{
@@ -49,9 +46,9 @@
 	    string[] defaultButtonContent = new string[] { "Back", "Previous Page", "Next Page" };
 	    Position[] defaultButtonPositions = new Position[]
 	    {
-		new Position(consoleCenter.Left + 15, consoleCenter.Top - 12), // Back   
-                new Position(consoleCenter.Left - 18, consoleCenter.Top + 12), // Previous Page
-                new Position(consoleCenter.Left + 10, consoleCenter.Top + 12), // Next Page
+		new Position(consoleCenter.Left + 15, consoleCenter.Top - 10), // Back
+		new Position(consoleCenter.Left - 21, consoleCenter.Top + 12), // Previous Page
+		new Position(consoleCenter.Left + 15, consoleCenter.Top + 12), // Next Page
             };
 
 	    Position[] categoryButtonPositions = new Position[]
@@ -70,7 +67,6 @@
 
 	    IList<ILabel> buttons = new List<ILabel>();
 	    buttons.Add(new Label(defaultButtonContent[0], defaultButtonPositions[0]));
-
 	    for (int i = 0; i < categoryButtonPositions.Length; i++)
 	    {
 		string currentCategoryName = string.Empty;
@@ -84,21 +80,23 @@
 
 		buttons.Add(label);
 	    }
-
-	    buttons.Add(new Label(defaultButtonContent[1], defaultButtonPositions[1], this.IsFirstPage));
-	    buttons.Add(new Label(defaultButtonContent[2], defaultButtonPositions[2], this.IsLastPage));
-
+	    if (CurrentPage > 0 && LastPage > 0)
+		buttons.Add(new Label(defaultButtonContent[1], defaultButtonPositions[1]));
+	    else buttons.Add(new Label(defaultButtonContent[1], defaultButtonPositions[1], true));
+	    if (CurrentPage < LastPage && LastPage > 0)
+		buttons.Add(new Label(defaultButtonContent[2], defaultButtonPositions[2]));
+	    else buttons.Add(new Label(defaultButtonContent[2], defaultButtonPositions[2], true));
 	    this.Buttons = buttons.ToArray();
 	}
 
 	private void InitializeStaticLabels(Position consoleCenter)
 	{
-	    string[] labelContent = new string[] { string.Format("CATEGORY: {0}", this.categoryName), "Title", "Replies" };
+	    string[] labelContent = new string[] { String.Format("CATEGORY: {0}", this.categoryName), "Posts:", /*"Replies"*/ };
 	    Position[] labelPositions = new Position[]
 	    {
-		new Position(consoleCenter.Left - 18, consoleCenter.Top - 12), // CATEGORY: {0}
-                new Position(consoleCenter.Left - 18, consoleCenter.Top - 10), // Name
-                new Position(consoleCenter.Left + 14, consoleCenter.Top - 10), // Posts
+		new Position(consoleCenter.Left - 18, consoleCenter.Top - 12), // CategoryName
+                new Position(consoleCenter.Left - 18, consoleCenter.Top - 10), // PostsColumn
+                //new Position(consoleCenter.Left + 14, consoleCenter.Top - 10), // RepliesColumn
             };
 
 	    IList<ILabel> labels = new List<ILabel>();

@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Forum.Data;
-using Forum.Models;
-using Forum.App.UserInterface.ViewModels;
-using System;
-
-namespace Forum.App.Services
+﻿namespace Forum.App.Services
 {
+    using System.Collections.Generic;
+    using System.Linq;
+    using Forum.Data;
+    using Forum.Models;
+    using Forum.App.UserInterface.ViewModels;
+    using System;
+    using static Forum.App.Controllers.AddPostController;
+    using static Forum.App.Controllers.AddReplyController;
+
     public class PostService
     {
 	public static string[] GetAllCategoryNames()
@@ -23,10 +25,10 @@ namespace Forum.App.Services
 	    return category;
 	}
 
-	public static IEnumerable<Post> GetPostsByCategory(int categoryId)
+	public static IEnumerable<Post> GetPostsByCategory(string categoryName)
 	{
 	    ForumData forumData = new ForumData();
-	    ICollection<int> postIds = forumData.Categories.First(c => c.Id == categoryId).PostIds;
+	    ICollection<int> postIds = forumData.Categories.First(c => c.Name == categoryName).PostIds;
 	    IEnumerable<Post> posts = forumData.Posts.Where(p => postIds.Contains(p.Id));
 	    return posts;
 	}
@@ -44,12 +46,35 @@ namespace Forum.App.Services
 	    return replies;
 	}
 
-	public static PostViewModel GetPostViewModel(int postId)
+	public static PostViewModel GetPostViewModel(string postTitle)
 	{
 	    ForumData forumData = new ForumData();
-	    Post post = forumData.Posts.Find(p => p.Id == postId);
+	    Post post = forumData.Posts.Find(p => p.Title == postTitle);
 	    PostViewModel postViewModel = new PostViewModel(post);
 	    return postViewModel;
+	}
+
+	public static AddPostStatus TrySavePost(PostViewModel postViewModel)
+	{
+	    if (String.IsNullOrWhiteSpace(postViewModel.Title) ||
+		postViewModel.Title.Length < 4 || postViewModel.Title.Length > 64)
+		return AddPostStatus.TitleError;
+	    if (String.IsNullOrWhiteSpace(postViewModel.Category) ||
+		postViewModel.Category.Length < 4 || postViewModel.Category.Length > 32)
+		return AddPostStatus.CategoryError;
+	    if (!postViewModel.Content.Any()) return AddPostStatus.ContentError;
+	    ForumData forumData = new ForumData();
+	    Category category = EnsureCategory(postViewModel, forumData);
+	    int postId = forumData.Posts.LastOrDefault()?.Id + 1 ?? 1;
+	    User author = forumData.Users.Find(u => u.Username == postViewModel.Author);
+	    string content = String.Join("", postViewModel.Content);
+	    Post post = new Post(postId, postViewModel.Title, content, category.Id, author.Id);
+	    forumData.Posts.Add(post);
+	    author.PostIds.Add(postId);
+	    category.PostIds.Add(postId);
+	    forumData.SaveChanges();
+	    postViewModel.PostId = postId;
+	    return AddPostStatus.Success;
 	}
 
 	private static Category EnsureCategory(PostViewModel postView, ForumData forumData)
@@ -58,8 +83,7 @@ namespace Forum.App.Services
 	    Category category = forumData.Categories.FirstOrDefault(c => c.Name == categoryName);
 	    if (category == null)
 	    {
-		List<Category> categories = forumData.Categories;
-		int categoryId = categories.LastOrDefault()?.Id + 1 ?? 1;
+		int categoryId = forumData.Categories.LastOrDefault()?.Id + 1 ?? 1;
 		category = new Category(categoryId, categoryName);
 		forumData.Categories.Add(category);
 		forumData.SaveChanges();
@@ -67,44 +91,21 @@ namespace Forum.App.Services
 	    return category;
 	}
 
-	public static bool TrySavePost(PostViewModel postView)
+	public static AddReplyStatus TrySaveReply(ReplyViewModel replyView)
 	{
-	    bool isCategoryEmpty = String.IsNullOrWhiteSpace(postView.Category);
-	    bool isTitleEmpty = String.IsNullOrWhiteSpace(postView.Title);
-	    bool isContentEmpty = !postView.Content.Any();
-	    if (isCategoryEmpty || isTitleEmpty || isContentEmpty) return false;
-	    ForumData forumData = new ForumData();
-	    Category category = EnsureCategory(postView, forumData);
-	    int postId = forumData.Posts.LastOrDefault()?.Id + 1 ?? 1;
-	    User author = UserService.GetUser(postView.Author);
-	    int authorId = author.Id;
-	    string content = String.Join("", postView.Content);
-	    Post post = new Post(postId, postView.Title, content, category.Id, authorId);
-	    forumData.Posts.Add(post);
-	    author.PostIds.Add(postId);
-	    category.PostIds.Add(postId);
-	    forumData.SaveChanges();
-	    postView.PostId = postId;
-	    return true;
-	}
-
-	public static bool TrySaveReply(ReplyViewModel replyView)
-	{
-	    bool isContentEmpty = !replyView.Content.Any();
-	    if (isContentEmpty) return false;
+	    if (!replyView.Content.Any()) return AddReplyStatus.ContentError;
 	    ForumData forumData = new ForumData();
 	    int replyId = forumData.Replies.LastOrDefault()?.Id + 1 ?? 1;
 	    string content = String.Join("", replyView.Content);
-	    User author = UserService.GetUser(replyView.Author);
-	    int authorId = author.Id;
-	    int postId = replyView.PostId;
-	    Post post = forumData.Posts.Find(p => p.Id == postId);
-	    Reply reply = new Reply(replyId, content, authorId, postId);
+	    User author = forumData.Users.Find(u => u.Username == replyView.Author);
+	    string postTitle = replyView.PostTitle;
+	    Post post = forumData.Posts.Find(p => p.Title == postTitle);
+	    Reply reply = new Reply(replyId, content, author.Id, post.Id);
 	    forumData.Replies.Add(reply);
 	    post.ReplyIds.Add(replyId);
 	    forumData.SaveChanges();
 	    replyView.ReplyId = replyId;
-	    return true;
+	    return AddReplyStatus.Success;
 	}
     }
 }

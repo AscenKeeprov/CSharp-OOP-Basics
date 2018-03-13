@@ -3,7 +3,6 @@
     using System.Collections.Generic;
     using Forum.App.UserInterface;
     using Forum.App.UserInterface.Contracts;
-    using Forum.App.UserInterface.Input;
     using Forum.App.UserInterface.ViewModels;
 
     public class AddReplyView : IView
@@ -12,12 +11,15 @@
 	private const int LEFT_OFFSET = 18;
 	private const int TOP_OFFSET = 7;
 
-	public AddReplyView(PostViewModel postViewModel, ReplyViewModel reply, TextArea textArea, bool error = false)
+	public AddReplyView(PostViewModel postViewModel, string errorMessage = null)
 	{
-	    this.Post = postViewModel;
-	    this.SetBuffer();
-	    this.InitalizeLabels();
+	    Post = postViewModel;
+	    SetBuffer();
+	    if (errorMessage != null) ErrorMessage = errorMessage;
+	    InitalizeLabels();
 	}
+
+	private string ErrorMessage { get; set; } = "";
 
 	public ILabel[] Labels { get; private set; }
 
@@ -39,6 +41,8 @@
 	{
 	    Position consoleCenter = Position.ConsoleCenter();
 
+	    Position errorPosition =
+		new Position(consoleCenter.Left - 18, consoleCenter.Top - 12);
 	    Position titlePosition =
 		new Position(consoleCenter.Left - this.Post.Title.Length / 2, consoleCenter.Top - 10);
 	    Position authorPosition =
@@ -46,8 +50,9 @@
 
 	    var labels = new List<ILabel>()
 	    {
-		new Label(this.Post.Title, titlePosition),
-		new Label($"Author: {this.Post.Author}", authorPosition),
+		new Label(ErrorMessage, errorPosition),
+		new Label(Post.Title, titlePosition),
+		new Label($"Author: {Post.Author}", authorPosition),
 	    };
 
 	    int leftPosition = consoleCenter.Left - LEFT_OFFSET;

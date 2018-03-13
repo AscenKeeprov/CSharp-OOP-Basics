@@ -1,17 +1,18 @@
-﻿using System;
-using System.Linq;
-using Forum.App.Controllers.Contracts;
-using Forum.App.Services;
-using Forum.App.UserInterface;
-using Forum.App.UserInterface.Contracts;
-using Forum.App.UserInterface.Input;
-using Forum.App.UserInterface.ViewModels;
-using Forum.App.UserInterface.Views;
-
-namespace Forum.App.Controllers
+﻿namespace Forum.App.Controllers
 {
+    using System;
+    using System.Linq;
+    using Forum.App.Controllers.Contracts;
+    using Forum.App.Services;
+    using Forum.App.UserInterface;
+    using Forum.App.UserInterface.Contracts;
+    using Forum.App.UserInterface.Input;
+    using Forum.App.UserInterface.ViewModels;
+    using Forum.App.UserInterface.Views;
+
     public class AddPostController : IController
     {
+	private const string POST_ERROR = "Invalid {0}!";
 	private const int COMMAND_COUNT = 4;
 	private const int TEXT_AREA_WIDTH = 37;
 	private const int TEXT_AREA_HEIGHT = 18;
@@ -20,11 +21,16 @@ namespace Forum.App.Controllers
 	private static int centerLeft = Position.ConsoleCenter().Left;
 	public PostViewModel Post { get; private set; }
 	private TextArea TextArea { get; set; }
-	public bool Error { get; private set; }
+	private string ErrorMessage { get; set; }
 
 	private enum Command
 	{
 	    AddTitle, AddCategory, Write, Post
+	}
+
+	public enum AddPostStatus
+	{
+	    Success, TitleError, CategoryError, ContentError
 	}
 
 	public AddPostController()
@@ -34,16 +40,16 @@ namespace Forum.App.Controllers
 
 	public void ResetPost()
 	{
-	    Error = false;
+	    ErrorMessage = String.Empty;
 	    Post = new PostViewModel();
 	    TextArea = new TextArea(centerLeft - 18, centerTop - 7,
 		TEXT_AREA_WIDTH, TEXT_AREA_HEIGHT, POST_MAX_LENGTH);
 	}
 
-	public IView GetView(string userName)
+	public IView GetView(string username)
 	{
-	    Post.Author = userName;
-	    return new AddPostView(Post, TextArea, Error);
+	    Post.Author = username;
+	    return new AddPostView(Post, TextArea, ErrorMessage);
 	}
 
 	public void ReadTitle()
@@ -78,15 +84,24 @@ namespace Forum.App.Controllers
 		    ReadContent();
 		    return MenuState.AddPost;
 		case Command.Post:
-		    bool validPost = PostService.TrySavePost(Post);
-		    if (!validPost)
+		    AddPostStatus addPostStatus = PostService.TrySavePost(Post);
+		    switch (addPostStatus)
 		    {
-			Error = true;
-			return MenuState.Rerender;
+			case AddPostStatus.Success:
+			    return MenuState.PostAdded;
+			case AddPostStatus.TitleError:
+			    ErrorMessage = String.Format(POST_ERROR, nameof(Post.Title).ToLower());
+			    return MenuState.Error;
+			case AddPostStatus.CategoryError:
+			    ErrorMessage = String.Format(POST_ERROR, nameof(Post.Category).ToLower());
+			    return MenuState.Error;
+			case AddPostStatus.ContentError:
+			    ErrorMessage = String.Format(POST_ERROR, nameof(Post.Content).ToLower());
+			    return MenuState.Error;
 		    }
-		    return MenuState.PostAdded;
+		    break;
 	    }
-	    throw new InvalidOperationException();
+	    throw new InvalidCommandException();
 	}
     }
 }

@@ -2,8 +2,8 @@
 {
     public interface IInput
     {
-        bool AddCharacter(char character);
+	bool AddCharacter(char character);
 
-        void Delete();
+	void Delete();
     }
 }

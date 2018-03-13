@@ -2,8 +2,10 @@
 {
     public interface IReadUserInfoController
     {
-	string Username { get; }
 	void ReadUsername();
+
 	void ReadPassword();
+
+	string Username { get; }
     }
 }
